@@ -49,3 +49,57 @@ Negative cases observed before their fixes:
 A single local timing sample with 2,000 distinct files, approximately 2 MiB total: initial checkpoint **472 ms**, unchanged checkpoint **194 ms**, undo of one edited file **416 ms**. These are not cross-platform performance guarantees.
 
 Not verified: live authenticated sessions with the named coding agents, remote CI execution, Linux runtime behavior, x64 runtime behavior, power-loss recovery, network filesystems and hostile concurrent writers. CI is configured for macOS and Ubuntu on Node 22 and 24. The PTY test uses Python 3 as a test driver; runtime use does not require Python.
+
+
+## README refresh verification
+
+The README was reduced from 1,609 to 709 whitespace-separated words. The original user guide, hook configurations, exclusion rules, storage details and full limitations now live in [guide.md](guide.md). No runtime code, dependency versions or test cases changed.
+
+From an empty directory, with a fresh temporary npm prefix and cache:
+
+```text
+$ npm install --global --install-links github:itzjk/turnback
+added 3 packages in 2s
+GitHub install exit: 0
+```
+
+From a clean source copy without `.git` or `node_modules`:
+
+```text
+$ npm ci
+added 2 packages, and audited 3 packages
+found 0 vulnerabilities
+$ npm test
+tests 22
+pass 22
+fail 0
+cancelled 0
+skipped 0
+todo 0
+$ npm run demo
+Restored #1. Previous files saved as #2.
+Run turnback redo to reapply.
+app works
+MODE=development
+do not lose this
+Restored #2. Previous files saved as #1.
+Run turnback undo to go back.
+$ npm pack --dry-run
+turnback-0.1.0.tgz
+```
+
+`bash -n scripts/demo-setup.sh`, `node --check scripts/demo-project.mjs`, and `vhs validate docs/demo.tape` all exited 0. Executing the tape's commands in a fresh temporary project produced:
+
+```text
+demo broken: PASS
+demo restored: PASS
+demo broken: PASS
+```
+
+Those assertions verify app contents, `.env`, recovery of deleted notes and removal of the unwanted new file, followed by redo of the broken state. The fixture is scripted; it does not invoke an authenticated coding service.
+
+An independent reviewer followed only the README, installed from GitHub in another clean temporary prefix, and exercised watch, checkpoint, list, diff, undo, redo, restore, and subdirectory navigation. It reported `undo assertions: PASS`, `redo assertions: PASS`, and `real PTY two submissions + sequential undo: PASS`. It also checked unchanged git metadata, preserved excluded dependencies, a symlink boundary, private store permissions, local links and HTTP links. The installed CLI matched the local runtime files byte for byte. No additional README or CLI issue was reported.
+
+**Recording remains blocked.** `vhs docs/demo.tape` exited 1 with `could not start browser: browser exited unexpectedly before its debugging endpoint was ready`. A direct Chromium headless diagnostic terminated with `MachPortRendezvousServer: Permission denied (1100)`. The recording environment prevents Chromium startup. No GIF was emitted, so the required 10–25 second GIF and its visual layout are **not verified**. The README keeps the executed terminal transcript until a recording can be produced and inspected. To finish the visual requirement, run `vhs docs/demo.tape` in an environment that permits Chromium to start, inspect the result, and replace the transcript with `![turnback undo demo](docs/demo.gif)`.
+
+Nothing was published or pushed during this refresh.

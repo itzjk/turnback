@@ -1,8 +1,9 @@
 # turnback
 
-**Ctrl+Z for AI coding agents. Recover a bad turn, including deleted files and `.env`, without touching your git history.**
+Ctrl+Z for AI coding agents.
 
-Wrap any terminal agent. No agent configuration required. Your `.git` stays untouched, and git-ignored files are included.
+[![CI](https://github.com/itzjk/turnback/actions/workflows/ci.yml/badge.svg)](https://github.com/itzjk/turnback/actions/workflows/ci.yml)
+[![MIT license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 ```console
 $ turnback watch -- node demo-agent.mjs
@@ -17,145 +18,74 @@ MODE=development
 do not lose this
 ```
 
-Actual terminal output from the [deterministic demo agent](scripts/demo.mjs), which deliberately breaks files. [Full transcript](docs/demo.txt). Run it yourself with `npm run demo`.
+[Run the scripted demo or record it with VHS](docs/guide.md#recording-the-demo).
 
-Install in one command (Node.js 22+, macOS or Linux):
+## Quick start
+
+Install with Node.js 22+ on macOS or Linux:
 
 ```sh
 npm install --global --install-links github:itzjk/turnback
 ```
 
-(From a clone, `npm install --global --install-links .` does the same.)
-
-Then, inside the project you want to protect:
+Inside the project you want to protect, wrap your terminal agent:
 
 ```sh
 turnback watch -- codex
 ```
 
-Replace `codex` with `claude`, `gemini`, `opencode`, `aider`, or any other terminal command. When a turn goes wrong, **stop the agent**, then run `turnback undo`. `turnback redo` puts the saved work back.
+Replace `codex` with `claude`, `gemini`, `opencode`, `aider`, or another terminal command. When a turn goes wrong, stop the agent and run `turnback undo`. Changed files, deleted files and git-ignored files return to their checkpoint. Run `turnback redo` to bring the saved work back.
 
-Not on the npm registry yet, so `npx turnback` does not install this tool; use the GitHub command above.
+## Features
 
-`--install-links` installs a complete package with its PTY dependency instead of linking to a checkout that may have no dependencies installed.
+- Recover edits, deletions and unwanted new files with one undo.
+- Protect git-ignored files, including `.env`, alongside your source.
+- Keep your git history, branches and staging area untouched.
+- Wrap terminal agents without configuring plugins or hooks.
+- Inspect changes and restore any retained checkpoint by ID.
 
-Built with Node.js for a single npm install, with a prebuilt PTY dependency for real terminal behavior and a content-addressed store that needs no git executable.
+## Why
 
-## What counts as a turn?
-
-In an interactive terminal, `watch` checkpoints before forwarding each Enter to the agent. It keeps the agent on a real pseudoterminal, forwards signals and window resizing, and understands bracketed paste. Unchanged trees share a checkpoint.
-
-Enter is a terminal submission, not a universal agent event. Approval prompts and unbracketed multiline pastes can add checkpoints. Autonomous background turns and agents that submit with another key are not detected. A command with piped input gets one checkpoint before launch. Use the optional hooks below when you need exact agent boundaries.
-
-## Commands
-
-| Command | Result |
-| --- | --- |
-| `turnback watch -- <command> [args]` | Save before launch and before interactive submissions |
-| `turnback checkpoint [label]` | Save the current tree manually or from a hook |
-| `turnback undo` | Save unsaved work, then go back one checkpoint |
-| `turnback redo` | Reapply an undo |
-| `turnback list` | Show stable IDs, labels and timestamps; `*` marks the current checkpoint |
-| `turnback diff [id]` | Compare the live tree with a checkpoint, defaulting to the current one |
-| `turnback restore <id>` | Save current work and restore any retained checkpoint |
-
-`diff` includes full replacement hunks for small text files, file modes, symlink changes, and a summary for binary files or files above 64 KiB. It can print secrets from `.env`, so review output before sharing it.
-
-Options go before the command: `turnback --cwd ./project undo`, `turnback --quiet checkpoint before-turn`, `turnback --help`, `turnback --version`. From a subdirectory, turnback finds the nearest parent with a `.turnback` store. On first use, the current directory becomes the project boundary.
-
-Undo after unsaved edits restores the current checkpoint and keeps those edits for redo. Otherwise it walks backward through saved checkpoints. New edits after an undo block redo until you checkpoint or undo those edits. Restoring a numbered checkpoint is also undoable. Older branches remain accessible by ID until retention expires.
-
-## Optional integrations
-
-### Claude Code: before each prompt
-
-Merge this into your project's `.claude/settings.local.json`, preserving existing hooks:
-
-```json
-{
-  "hooks": {
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "turnback --cwd \"$CLAUDE_PROJECT_DIR\" --quiet checkpoint before-turn || exit 2",
-            "onFailure": "block"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-Run `claude` normally with this hook, without `watch`. The synchronous hook captures before the prompt; exit code 2 blocks submission when checkpointing fails. The store is created on the first prompt. See the [official hook reference](https://code.claude.com/docs/en/hooks#userpromptsubmit).
-
-### Codex: after each completed turn
-
-Run `turnback checkpoint baseline` before starting Codex. Add this to your user-level `~/.codex/config.toml`:
-
-```toml
-notify = ["turnback", "notify"]
-```
-
-This adapter reads Codex's JSON argument, uses its `cwd`, and saves a checkpoint after `agent-turn-complete`. It discards prompt and response text. A baseline plus completion checkpoints lets `undo` step back through completed turns. `notify` is an after-turn event, so it does not protect a failed or interrupted first turn without that baseline. Existing notification commands must be combined manually; don't overwrite one you need. See [official notification documentation](https://developers.openai.com/codex/config-advanced#notifications).
-
-The adapters are tested with representative payloads. Live authenticated sessions with each named agent have not been validated. For other hook systems, call `turnback --quiet checkpoint before-turn` synchronously before the agent edits files.
-
-## What gets saved?
-
-Files ignored by **git** are saved, including `.env`. turnback does not read `.gitignore` or invoke git.
-
-Always excluded at any depth: `.git`, `.turnback`, `.turnbackignore`, `node_modules`, `.venv`, `venv`, `__pycache__`, `.cache`, `.next`, `.nuxt`, `.turbo`, `target`, `dist`, `build`, and `coverage`. `.git` and `.turnback` are protected regardless of case. Files above **10 MiB**, sockets, devices and FIFOs are excluded. Smaller binaries are saved. Checkpoints report exclusions; `watch` prints their count.
-
-Add a `.turnbackignore` file for extra exclusions, one literal path or basename per line:
-
-```text
-artifacts
-data/cache
-local-secrets.txt
-```
-
-A basename matches at any depth. A path containing `/` is relative to the project root. Blank lines and lines starting with `#` are ignored. Globs, negation, backslashes and `..` are rejected. Excluded paths are never restored or deleted. The current `.turnbackignore` is always retained, so recovery cannot remove the rules protecting those paths. If restoring would overwrite an excluded path or replace its containing directory, turnback refuses before applying changes. Changing exclusion rules between checkpoints can require adjusting the rules before a restore succeeds.
-
-Symlinks are stored as links and never traversed. File permissions and empty directories are preserved. Timestamps, ownership, ACLs, extended attributes and hard-link relationships are not preserved.
+An agent can rewrite a working project in one turn; making a commit before every prompt gets old. On October 27, 2026, [Codex's request to bring back /undo](https://github.com/openai/codex/issues/9203) was open with **490 thumbs-up reactions**. turnback gives file recovery its own history, covering files git ignores too; [research notes](docs/research.md) compare the neighboring tools.
 
 ## How it works
 
-`.turnback/` is a private shadow store: SHA-256 content objects, manifests, and an atomically replaced index. Identical contents are stored once. No git repository is required. Your real `.git`, index, branches and commits are never read or written by turnback. Git operations performed by the agent itself are outside this guarantee.
+turnback saves a checkpoint before launching the agent and before forwarding each interactive Enter. It stores file contents in a separate `.turnback/` directory, sharing identical contents between checkpoints without invoking git. Before restoring, it saves your current files so you can undo the restore too. Node.js keeps installation to one npm command, with a prebuilt PTY dependency for terminal support. [Storage and recovery details](docs/guide.md#how-it-works).
 
-Before a restore, turnback validates paths and content hashes, checks exclusions, and saves the current tree as a safety checkpoint. It then records a recovery journal, restores with atomic per-file replacements, verifies the tree, and only then advances navigation. A write failure triggers rollback. If rollback cannot finish or the process crashes, further navigation stops with the exact recovery command. Explicit recovery saves the interrupted tree first.
+## Usage
 
-Keep `.turnback/` out of commits by adding `.turnback/` to your project's `.gitignore` yourself. turnback never edits that file for you. The store contains local plaintext copies of secrets, with private directory permissions; it is not encrypted. Never upload it.
+| Command | What it does |
+| --- | --- |
+| `turnback watch -- <command> [args]` | Checkpoint before launch and terminal submissions |
+| `turnback checkpoint [label]` | Save manually or from an agent hook |
+| `turnback undo` | Save current work and go back |
+| `turnback redo` | Reapply an undo |
+| `turnback list` | Show checkpoint IDs, labels and times |
+| `turnback diff [id]` | Compare your files with a checkpoint |
+| `turnback restore <id>` | Restore a checkpoint, saving current work first |
 
-History is rolling: at most **200 checkpoints**, with the active checkpoint and in-progress recovery checkpoints protected. Old manifests and unreferenced content are pruned as new checkpoints are saved. A snapshot is limited to **250 MiB** of included file contents; exceeding that limit fails checkpointing. Allow space for retained changes and a safety snapshot before restoring.
+Options go before the command, for example `turnback --cwd ./project undo`. On first use, the current directory becomes the project boundary. Later invocations find an existing store in parent directories. [Navigation rules and options](docs/guide.md#commands-and-navigation).
 
-## Why it exists
+## FAQ
 
-On **2026-10-27**, [Codex issue #9203, “Please make /undo back”](https://github.com/openai/codex/issues/9203), was open with **490 thumbs-up reactions**, measured from the [GitHub issue API](https://api.github.com/repos/openai/codex/issues/9203). Users want recovery without making a commit before every prompt.
+**Does it work with my agent?** Terminal wrapping is independent of the agent. Live authenticated sessions with every named agent have not been tested. Optional [Claude Code and Codex integrations](docs/guide.md#optional-integrations) offer agent events instead of terminal submissions.
 
-This is an existing category. [ckpt](https://github.com/mohshomis/ckpt) uses branches and commits in the user's repository. [Sheep](https://github.com/gokay-ai/sheep) offers turn checkpoints through herdr and excludes git-ignored files. [snap-back](https://github.com/Abelo9996/snap-back) has a shadow git store and Claude hooks, but excludes git-ignored files. [agent-undo](https://github.com/luxavr/agent-undo) includes small ignored files, takes one checkpoint per session, and can restore git HEAD/branch metadata. turnback combines terminal submissions, ignored-file coverage, explicit redo, and zero git operations. These differences are scope choices, not proof that it is a better tool. [Research notes](docs/research.md).
+**Does it touch my git repository?** No. turnback never reads or writes `.git`, and works outside git repositories. Add `.turnback/` to your `.gitignore` to keep local checkpoints out of commits.
 
-## Limits
+**What happens to secrets and dependencies?** `.env` is included. Dependencies, build output and files over 10 MiB are excluded. Add literal paths or basenames to `.turnbackignore` for [extra exclusions](docs/guide.md#what-gets-saved). The store contains plaintext copies of secrets; keep it local. Diff output can contain them too.
 
-- macOS and Linux only for this release. Node.js 22+; PTY prebuilds target x64 and arm64. Other platforms and architectures are unverified.
-- Stop all agents, editors with autosave, dev servers and background writers before restoring. turnback blocks restores while its own watched process is active; it cannot lock other applications out of your files. Concurrent checkpoints fail fast on the store lock.
-- Snapshots scan and hash the included tree. Large source trees increase prompt latency; exclude generated output. This is not a continuous backup or a filesystem-wide atomic snapshot.
-- Multi-file restore is not atomic. The saved safety checkpoint and journal provide recovery. Content objects are written and renamed before the index; manifests, the index and restored files are fsynced, while content objects are not individually fsynced. Power-loss durability, network filesystems and hostile same-user processes have not been validated. An agent with filesystem access can delete `.turnback` too.
-- Only files inside the project boundary are recoverable. Sent emails, deployments, external databases, git changes and files outside that boundary cannot be undone. Agent conversation memory is not rewound; tell the agent you restored files before continuing.
-- Retention expires old checkpoints. Excluded files have no recovery guarantee. Keep an independent backup for irreplaceable work.
+**Can I undo an undo?** Yes, with `turnback redo`. New edits after an undo block redo until you checkpoint or undo those edits. Numbered restores are also undoable.
 
-## Development
+## Limitations
 
-```sh
-npm ci
-npm test
-npm run demo
-npm pack --dry-run
-```
+- Enter is a submission boundary. Approval prompts may add checkpoints; autonomous background turns need hooks. Piped input gets one checkpoint before launch.
+- Stop agents, autosaving editors and other writers before restoring. Multi-file restores use a recovery journal, rather than a filesystem-wide atomic operation.
+- History retains up to 200 checkpoints, with a 250 MiB limit per snapshot. Scanning large trees adds latency; exclude generated output.
+- Recovery covers files inside the project. External services, git operations and agent conversation memory cannot be rewound. [Full limits](docs/guide.md#limits).
 
-The tests exercise undo/redo, ignored secrets, deletion recovery, full `.git` byte invariance, real PTY turns, binary files, permissions, symlink boundaries, exclusions, corruption, injected disk failures, crash recovery and retention. Python 3 is used only by the PTY test driver; that test is explicitly skipped if Python is missing. CI runs the suite on macOS and Ubuntu with Node 22 and 24.
+## Contributing
+
+From a clone, run `npm ci` then `npm test`; include a reproducer with bug reports. [Development and demo recording](docs/guide.md#recording-the-demo).
 
 ## License
 
