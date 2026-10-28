@@ -178,3 +178,43 @@ recording failed
 ```
 
 The required GIF remains **not verified**: Chromium cannot start in this recording environment. Record and inspect `docs/demo.gif` in an environment that permits Chromium startup before publication. Remote CI and authenticated agent sessions were not run for this change. Nothing was published or pushed.
+
+## Demo recording follow-up
+
+Verified on 2026-10-27, macOS arm64, Node 24.16.0. The initial missing-recording check failed with `AssertionError: Missing real VHS recording: docs/demo.gif`. The unchanged baseline passed 24 tests, with 0 failures and 0 skips.
+
+`node scripts/demo.mjs --save` exited 0 in a newly created temporary project. The README terminal block now includes the complete captured output, including redo. A byte-for-byte comparison against `docs/demo.txt` passed. The README contains 735 whitespace-separated words.
+
+The test script now explicitly selects the spec reporter so `npm test` prints its counts in both terminal and redirected output. In a fresh source copy without `.git` or `node_modules`, these commands all exited 0:
+
+```text
+$ npm ci
+added 2 packages, and audited 3 packages
+found 0 vulnerabilities
+$ npm test
+tests 24
+pass 24
+fail 0
+cancelled 0
+skipped 0
+todo 0
+$ npm run demo
+$ npm pack --dry-run
+turnback-0.1.0.tgz
+```
+
+The README GitHub installation command exited 0 from an empty directory with a new npm prefix and cache (`added 3 packages in 2s`). A separate local installation passed watch, checkpoint, list, diff with and without an ID, undo, redo, restore and `--cwd`. Assertions confirmed ignored `.env` recovery, deleted notes recovery, unwanted file removal and unchanged SHA-256 hashes of `.git` files. The quick-start `codex` command was exercised with a deterministic fixture on PATH, not an authenticated agent.
+
+An independent reviewer followed the README from another empty directory. The current local tarball passed 14/14 checks. The GitHub version passed 12/13: its pending-redo-after-checkpoint case still prints `turnback: Nothing to redo.` The existing local fix is not yet published.
+
+`vhs validate docs/demo.tape` exited 0. Executing its shell commands separately produced `demo broken: PASS`, `demo restored: PASS`, and `demo broken: PASS`. Recording itself still fails:
+
+```text
+$ vhs docs/demo.tape
+could not start browser: browser exited unexpectedly before its debugging endpoint was ready
+recording failed
+```
+
+Exit status: 1. A direct headless Chromium diagnostic exited on signal 5 and reported `bootstrap_check_in org.chromium.Chromium.MachPortRendezvousServer: Permission denied (1100)`. No GIF was generated. GIF duration and visual layout remain **not verified**, blocked by Chromium startup permissions. Run `vhs docs/demo.tape` in a terminal that permits Chromium startup, inspect the resulting 10–25 second GIF, then replace the README console block with `![turnback undo demo](docs/demo.gif)` before publication.
+
+No runtime behavior changed in this follow-up. Nothing was committed, pushed or published.

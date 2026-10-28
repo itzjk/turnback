@@ -16,9 +16,12 @@ $ cat app.txt .env notes.txt
 app works
 MODE=development
 do not lose this
+$ turnback redo
+Restored #2. Previous files saved as #1.
+Run turnback undo to go back.
 ```
 
-[Run the scripted demo or record it with VHS](docs/guide.md#recording-the-demo).
+[Demo fixture and recording](docs/guide.md#recording-the-demo).
 
 ## Quick start
 
