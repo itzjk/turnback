@@ -19,11 +19,13 @@ do not lose this
 
 Actual terminal output from the [deterministic demo agent](scripts/demo.mjs), which deliberately breaks files. [Full transcript](docs/demo.txt). Run it yourself with `npm run demo`.
 
-Install from a clean clone, in one command (Node.js 22+, macOS or Linux):
+Install in one command (Node.js 22+, macOS or Linux):
 
 ```sh
-npm install --global --install-links .
+npm install --global --install-links github:itzjk/turnback
 ```
+
+(From a clone, `npm install --global --install-links .` does the same.)
 
 Then, inside the project you want to protect:
 
@@ -33,7 +35,7 @@ turnback watch -- codex
 
 Replace `codex` with `claude`, `gemini`, `opencode`, `aider`, or any other terminal command. When a turn goes wrong, **stop the agent**, then run `turnback undo`. `turnback redo` puts the saved work back.
 
-This checkout is not an npm release. `npx turnback` is not an installation route for this version; the npm name may belong to another package. No registry publication is assumed.
+Not on the npm registry yet, so `npx turnback` does not install this tool; use the GitHub command above.
 
 `--install-links` installs a complete package with its PTY dependency instead of linking to a checkout that may have no dependencies installed.
 
