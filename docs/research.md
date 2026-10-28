@@ -21,7 +21,7 @@ These projects already solve substantial parts of the brief. Their published sco
 | [snap-back](https://github.com/Abelo9996/snap-back) | Shadow git store, wrapper, watcher and Claude hooks; `.gitignore` honored | Ignored files included; Enter boundaries and dedicated redo |
 | [agent-undo](https://github.com/luxavr/agent-undo) | One checkpoint per terminal session; small ignored files included; HEAD/branch recovery | Submission checkpoints; git metadata never restored |
 
-Those descriptions are based on their READMEs, not independent execution of competing tools. No superiority claim has been validated. The strongest argument against releasing another tool is that snap-back already delivers most of the recovery workflow and agent-undo already includes ignored files. Real-agent usability testing must establish whether this combination is useful enough.
+Those descriptions are based on their READMEs, not independent execution of competing tools. turnback focuses on one workflow: checkpoint each terminal submission, recover git-ignored files by default, and navigate undo and redo without invoking git. snap-back is an alternative for users who want file watching and Claude hooks while keeping git-ignored files outside their snapshots. agent-undo covers small ignored files with session-level checkpoints. turnback's automated tests cover its submission boundaries, ignored-file recovery and redo navigation; they do not benchmark competing tools.
 
 Integration references, also read 2026-10-27:
 

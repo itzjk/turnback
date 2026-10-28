@@ -218,3 +218,35 @@ recording failed
 Exit status: 1. A direct headless Chromium diagnostic exited on signal 5 and reported `bootstrap_check_in org.chromium.Chromium.MachPortRendezvousServer: Permission denied (1100)`. No GIF was generated. GIF duration and visual layout remain **not verified**, blocked by Chromium startup permissions. Run `vhs docs/demo.tape` in a terminal that permits Chromium startup, inspect the resulting 10–25 second GIF, then replace the README console block with `![turnback undo demo](docs/demo.gif)` before publication.
 
 No runtime behavior changed in this follow-up. Nothing was committed, pushed or published.
+
+## Round 4 review corrections
+
+Verified on 2026-10-27, macOS arm64, Node 24.16.0. The FAQ now names the automated PTY coverage directly, the demo's introductory link was removed, and the research comparison explains the concrete differences in recovery scope. No runtime code changed. The README has 739 whitespace-separated words; its console block matches a fresh `node scripts/demo.mjs` run byte for byte.
+
+The baseline and a fresh source copy without `.git` or `node_modules` both produced:
+
+```text
+$ npm test
+tests 24
+pass 24
+fail 0
+cancelled 0
+skipped 0
+todo 0
+```
+
+In the fresh copy, `npm ci`, `npm run demo` and `npm pack --dry-run` also exited 0. `npm ci` reported `found 0 vulnerabilities`. `vhs validate docs/demo.tape` and `git diff --check` exited 0.
+
+An independent reviewer installed the local tarball and ran the exact GitHub installation command from an empty directory, each with a new npm prefix and cache. Both installations reported `added 3 packages in 3s`. The installed local CLI passed watch, checkpoint, list, diff, undo, redo, numbered restore and subdirectory navigation. Assertions confirmed ignored `.env` recovery, deletion recovery, removal of new files and identical contents of all 22 `.git` files in the fixture.
+
+The required recording still fails before any frames are captured:
+
+```text
+$ vhs docs/demo.tape
+could not start browser: browser exited unexpectedly before its debugging endpoint was ready
+recording failed
+```
+
+Exit status: 1. A separate installed Chromium headless-shell diagnostic exited on signal 5 with `bootstrap_check_in org.chromium.Chromium.MachPortRendezvousServer: Permission denied (1100)`. `docs/demo.gif` does not exist; the missing-file assertion fails. GIF duration, visual inspection and README embedding remain **not verified**, blocked by browser startup permissions. Recording requires a terminal environment that permits Chromium to start. The tape and terminal transcript remain available; neither is reported as a completed GIF.
+
+Nothing was committed, pushed or published.

@@ -21,8 +21,6 @@ Restored #2. Previous files saved as #1.
 Run turnback undo to go back.
 ```
 
-[Demo fixture and recording](docs/guide.md#recording-the-demo).
-
 ## Quick start
 
 Install with Node.js 22+ on macOS or Linux:
@@ -71,7 +69,7 @@ Options go before the command, for example `turnback --cwd ./project undo`. On f
 
 ## FAQ
 
-**Does it work with my agent?** Terminal wrapping is independent of the agent. Live authenticated sessions with every named agent have not been tested. Optional [Claude Code and Codex integrations](docs/guide.md#optional-integrations) offer agent events instead of terminal submissions.
+**Does it work with my agent?** Terminal wrapping is independent of the agent. Tested with a real PTY fixture; live Codex, Claude and Gemini sessions are not included in the automated suite. Optional [Claude Code and Codex integrations](docs/guide.md#optional-integrations) offer agent events instead of terminal submissions.
 
 **Does it touch my git repository?** No. turnback never reads or writes `.git`, and works outside git repositories. Add `.turnback/` to your `.gitignore` to keep local checkpoints out of commits.
 
