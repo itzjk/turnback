@@ -1,0 +1,44 @@
+{
+  "name": "turnback",
+  "version": "0.1.0",
+  "description": "Undo AI coding agent turns, including git-ignored files, without touching git history.",
+  "type": "module",
+  "bin": {
+    "turnback": "bin/turnback.mjs"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "demo": "node scripts/demo.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "MIT",
+  "keywords": [
+    "ai-agents",
+    "coding-agents",
+    "codex",
+    "claude-code",
+    "gemini-cli",
+    "opencode",
+    "undo",
+    "checkpoint",
+    "developer-tools",
+    "cli"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/itzjk/turnback.git"
+  },
+  "homepage": "https://github.com/itzjk/turnback#readme",
+  "bugs": "https://github.com/itzjk/turnback/issues",
+  "dependencies": {
+    "@lydell/node-pty": "1.1.0"
+  }
+}

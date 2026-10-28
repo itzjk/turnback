@@ -1,0 +1,13 @@
+$ turnback watch -- node demo-agent.mjs
+turnback: checkpoint #1. Stop the agent, then run turnback undo.
+agent: broke app.txt and .env, deleted notes.txt, created junk.txt
+$ turnback undo
+Restored #1. Previous files saved as #2.
+Run turnback redo to reapply.
+$ cat app.txt .env notes.txt
+app works
+MODE=development
+do not lose this
+$ turnback redo
+Restored #2. Previous files saved as #1.
+Run turnback undo to go back.
