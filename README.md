@@ -5,6 +5,10 @@ Ctrl+Z for AI coding agents.
 [![CI](https://github.com/itzjk/turnback/actions/workflows/ci.yml/badge.svg)](https://github.com/itzjk/turnback/actions/workflows/ci.yml)
 [![MIT license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
+![turnback undoing a broken agent turn](docs/demo.gif)
+
+<details><summary>Same demo as text</summary>
+
 ```console
 $ turnback watch -- node demo-agent.mjs
 turnback: checkpoint #1. Stop the agent, then run turnback undo.
@@ -20,6 +24,8 @@ $ turnback redo
 Restored #2. Previous files saved as #1.
 Run turnback undo to go back.
 ```
+
+</details>
 
 ## Quick start
 
@@ -86,7 +92,7 @@ Options go before the command, for example `turnback --cwd ./project undo`. On f
 
 ## Contributing
 
-From a clone, run `npm ci` then `npm test`; include a reproducer with bug reports. [Development and demo recording](docs/guide.md#recording-the-demo).
+From a clone, run `npm ci` then `npm test` (and `npm install --global --install-links .` to try your local build); include a reproducer with bug reports. [Development and demo recording](docs/guide.md#recording-the-demo).
 
 ## License
 
