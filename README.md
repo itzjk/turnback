@@ -74,7 +74,7 @@ Options go before the command, for example `turnback --cwd ./project undo`. On f
 
 **What happens to secrets and dependencies?** `.env` is included. Dependencies, build output and files over 10 MiB are excluded. Add literal paths or basenames to `.turnbackignore` for [extra exclusions](docs/guide.md#what-gets-saved). The store contains plaintext copies of secrets; keep it local. Diff output can contain them too.
 
-**Can I undo an undo?** Yes, with `turnback redo`. New edits after an undo block redo until you checkpoint or undo those edits. Numbered restores are also undoable.
+**Can I undo an undo?** Yes, with `turnback redo`. New edits after an undo block redo until you checkpoint or undo those edits. Saving a checkpoint keeps pending redo steps; undoing that redo brings your saved edits back. Numbered restores are also undoable.
 
 ## Limitations
 

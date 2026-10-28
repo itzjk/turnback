@@ -103,3 +103,78 @@ An independent reviewer followed only the README, installed from GitHub in anoth
 **Recording remains blocked.** `vhs docs/demo.tape` exited 1 with `could not start browser: browser exited unexpectedly before its debugging endpoint was ready`. A direct Chromium headless diagnostic terminated with `MachPortRendezvousServer: Permission denied (1100)`. The recording environment prevents Chromium startup. No GIF was emitted, so the required 10–25 second GIF and its visual layout are **not verified**. The README keeps the executed terminal transcript until a recording can be produced and inspected. To finish the visual requirement, run `vhs docs/demo.tape` in an environment that permits Chromium to start, inspect the result, and replace the transcript with `![turnback undo demo](docs/demo.gif)`.
 
 Nothing was published or pushed during this refresh.
+
+## Redo regression verification
+
+Verified on 2026-10-27, macOS arm64, Node 24.16.0. The unchanged baseline passed all 22 tests.
+
+The bug was in `Store.checkpoint`: saving a new checkpoint cleared `future`, the list consumed by `redo`. After an undo and manual edits, the dirty-tree error recommended checkpointing, but doing so removed the pending redo target. The fix preserves `future` when checkpointing. Restore safety checks, retention and numbered-restore navigation are unchanged.
+
+Two new CLI regression tests were run before changing the implementation:
+
+```text
+$ node --test --test-name-pattern='checkpointing manual|checkpoints preserve' test/core.test.mjs
+tests 2
+pass 0
+fail 2
+AssertionError [ERR_ASSERTION]: turnback: Nothing to redo.
+```
+
+After the fix:
+
+```text
+$ npm test
+tests 24
+pass 24
+fail 0
+cancelled 0
+skipped 0
+todo 0
+```
+
+The regression tests require the dirty redo to refuse without changing files, checkpoint #3 to save the manual edits, redo to restore the agent's #2, and undo to recover the manual edits. They also verify unchanged checkpoints, multiple manual checkpoints and the order of multiple pending redo steps. Each CLI invocation runs in a separate process, exercising persisted navigation.
+
+`npm run demo` exited 0 and restored the app, ignored `.env` and deleted notes before redoing the broken state. `npm pack --dry-run` exited 0 with a temporary writable npm cache. The first pack attempt failed because the default cache was outside the writable sandbox; no cache permissions were changed.
+
+From an empty temporary directory with a fresh npm prefix and cache:
+
+```text
+$ npm install --global --install-links github:itzjk/turnback
+added 3 packages in 5s
+GitHub install exit: 0
+$ turnback --version
+0.1.0
+Installed CLI exit: 0
+```
+
+This checks the documented installation command. The GitHub version does not yet include the local fix.
+
+An independent reviewer installed the local package using `npm pack --pack-destination "$review_dir" --json` and `npm install --prefix "$review_dir/install" "$review_dir/turnback-0.1.0.tgz" --no-audit --no-fund`, each with a fresh writable npm cache. Both exited 0. The installed CLI produced:
+
+```text
+$ turnback checkpoint manual
+Checkpoint #3 saved.
+$ turnback redo
+Restored #2. Previous files saved as #3.
+Run turnback undo to go back.
+$ cat app.txt
+agent
+$ turnback undo
+Restored #3. Previous files saved as #2.
+Run turnback redo to reapply.
+$ cat app.txt
+manual
+```
+
+The reviewer also verified all README CLI commands, parent-directory discovery, ignored `.env` recovery, deletion recovery and unchanged SHA-256 hashes of every `.git` file. `TURNBACK_CLI="$review_dir/install/node_modules/turnback/bin/turnback.mjs" node --test test/terminal.test.mjs` passed 1 test with 0 failures and 0 skips against the installed package. It exercises a real PTY, resizing and two turns. No additional issue was reported.
+
+A separate fresh source copy without `.git`, `node_modules` or local metadata passed `npm ci` (`found 0 vulnerabilities`, exit 0) and `npm test` (24 passed, 0 failed, 0 skipped, exit 0).
+
+`vhs docs/demo.tape` was retried and exited 1:
+
+```text
+could not start browser: browser exited unexpectedly before its debugging endpoint was ready
+recording failed
+```
+
+The required GIF remains **not verified**: Chromium cannot start in this recording environment. Record and inspect `docs/demo.gif` in an environment that permits Chromium startup before publication. Remote CI and authenticated agent sessions were not run for this change. Nothing was published or pushed.

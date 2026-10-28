@@ -102,6 +102,53 @@ test('watch protects a failing noninteractive agent and preserves its exit code'
   assert.equal(w.read('app'), 'bad');
 });
 
+test('checkpointing manual edits after undo preserves redo and makes those edits undoable', t => {
+  const w = workspace(t);
+  w.write('app.txt', 'base\n');
+  w.run('checkpoint', 'base');
+  w.write('app.txt', 'agent\n');
+  w.run('undo');
+  w.write('app.txt', 'manual\n');
+  const blocked = spawnSync(process.execPath, [cli, 'redo'], { cwd: w.root, encoding: 'utf8', timeout: 15000 });
+  assert.equal(blocked.status, 1);
+  assert.match(blocked.stderr, /Save a checkpoint or undo those edits before redo/);
+  assert.equal(w.read('app.txt'), 'manual\n');
+  assert.match(w.run('checkpoint', 'manual'), /Checkpoint #3 saved/);
+  assert.match(w.run('redo'), /Restored #2/);
+  assert.equal(w.read('app.txt'), 'agent\n');
+  w.run('undo');
+  assert.equal(w.read('app.txt'), 'manual\n');
+  w.run('redo');
+  assert.equal(w.read('app.txt'), 'agent\n');
+  w.run('restore', '3');
+  assert.equal(w.read('app.txt'), 'manual\n');
+});
+
+test('checkpoints preserve the full redo chain across multiple undo steps', t => {
+  const w = workspace(t);
+  for (const value of ['base', 'first turn', 'second turn']) {
+    w.write('app.txt', value);
+    w.run('checkpoint', value);
+  }
+  w.run('undo');
+  w.run('undo');
+  assert.match(w.run('checkpoint'), /unchanged/);
+  w.write('app.txt', 'manual');
+  w.run('checkpoint', 'manual');
+  w.write('app.txt', 'more manual');
+  w.run('checkpoint', 'more manual');
+  w.run('redo');
+  assert.equal(w.read('app.txt'), 'first turn');
+  w.run('redo');
+  assert.equal(w.read('app.txt'), 'second turn');
+  w.run('undo');
+  assert.equal(w.read('app.txt'), 'first turn');
+  w.run('undo');
+  assert.equal(w.read('app.txt'), 'more manual');
+  w.run('undo');
+  assert.equal(w.read('app.txt'), 'manual');
+});
+
 test('excluded dependencies, large files and symlink targets survive restoration', t => {
   const w = workspace(t);
   w.write('node_modules/pkg/index.js', 'dependency');

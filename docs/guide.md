@@ -26,6 +26,8 @@ Options go before the command: `turnback --cwd ./project undo`, `turnback --quie
 
 Undo after unsaved edits restores the current checkpoint and keeps those edits for redo. Otherwise it walks backward through saved checkpoints. New edits after an undo block redo until you checkpoint or undo those edits. Restoring a numbered checkpoint is also undoable. Older branches remain accessible by ID until retention expires.
 
+Saving a checkpoint preserves pending redo steps. For example, after undoing an agent turn, save any manual edits with `turnback checkpoint manual`, then run `turnback redo` to recover the agent's version. Running `turnback undo` brings the manual edits back. Multiple pending redo steps keep their order. Numbered `restore` starts a new navigation path and clears pending redo steps; retained checkpoints remain accessible by ID.
+
 ## Optional integrations
 
 ### Claude Code: before each prompt
