@@ -7,26 +7,6 @@ Ctrl+Z for AI coding agents.
 
 ![turnback undoing a broken agent turn](docs/demo.gif)
 
-<details><summary>Same demo as text</summary>
-
-```console
-$ turnback watch -- node demo-agent.mjs
-turnback: checkpoint #1. Stop the agent, then run turnback undo.
-agent: broke app.txt and .env, deleted notes.txt, created junk.txt
-$ turnback undo
-Restored #1. Previous files saved as #2.
-Run turnback redo to reapply.
-$ cat app.txt .env notes.txt
-app works
-MODE=development
-do not lose this
-$ turnback redo
-Restored #2. Previous files saved as #1.
-Run turnback undo to go back.
-```
-
-</details>
-
 ## Quick start
 
 Install with Node.js 22+ on macOS or Linux:
@@ -41,7 +21,7 @@ Inside the project you want to protect, wrap your terminal agent:
 turnback watch -- codex
 ```
 
-Replace `codex` with `claude`, `gemini`, `opencode`, `aider`, or another terminal command. When a turn goes wrong, stop the agent and run `turnback undo`. Changed files, deleted files and git-ignored files return to their checkpoint. Run `turnback redo` to bring the saved work back.
+Replace `codex` with `claude`, `gemini`, `opencode`, `aider`, or another terminal command. When a turn goes wrong, stop the agent and run `turnback undo`. Edited files, deleted files and git-ignored files return to their checkpoint; unwanted new files disappear. Run `turnback redo` to bring the saved work back.
 
 ## Features
 
@@ -57,7 +37,9 @@ An agent can rewrite a working project in one turn; making a commit before every
 
 ## How it works
 
-turnback saves a checkpoint before launching the agent and before forwarding each interactive Enter. It stores file contents in a separate `.turnback/` directory, sharing identical contents between checkpoints without invoking git. Before restoring, it saves your current files so you can undo the restore too. Node.js keeps installation to one npm command, with a prebuilt PTY dependency for terminal support. [Storage and recovery details](docs/guide.md#how-it-works).
+turnback saves a checkpoint before launching the agent and before forwarding each interactive Enter. A separate `.turnback/` directory holds its history, reusing unchanged file contents. Before restoring, it saves your current files for redo. It works inside or outside a git repository. [Storage and recovery details](docs/guide.md#how-it-works).
+
+Node.js makes installation one npm command; a prebuilt terminal dependency preserves the agent's interactive terminal.
 
 ## Usage
 
@@ -75,7 +57,7 @@ Options go before the command, for example `turnback --cwd ./project undo`. On f
 
 ## FAQ
 
-**Does it work with my agent?** Terminal wrapping is independent of the agent. Tested with a real PTY fixture; live Codex, Claude and Gemini sessions are not included in the automated suite. Optional [Claude Code and Codex integrations](docs/guide.md#optional-integrations) offer agent events instead of terminal submissions.
+**Does it work with my agent?** `watch` wraps terminal commands without an agent plugin. It checkpoints on Enter; optional [Claude Code and Codex integrations](docs/guide.md#optional-integrations) use agent events instead. See the guide for integration setup and [tested coverage](docs/verification.md).
 
 **Does it touch my git repository?** No. turnback never reads or writes `.git`, and works outside git repositories. Add `.turnback/` to your `.gitignore` to keep local checkpoints out of commits.
 
@@ -92,7 +74,7 @@ Options go before the command, for example `turnback --cwd ./project undo`. On f
 
 ## Contributing
 
-From a clone, run `npm ci` then `npm test` (and `npm install --global --install-links .` to try your local build); include a reproducer with bug reports. [Development and demo recording](docs/guide.md#recording-the-demo).
+From a clone, run `npm ci` then `npm test`; include a reproducer with bug reports. [Development, local installation and demo recording](docs/guide.md#development-and-verification).
 
 ## License
 

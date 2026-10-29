@@ -114,6 +114,8 @@ npm pack --dry-run
 
 The tests exercise undo/redo, ignored secrets, deletion recovery, full `.git` byte invariance, real PTY turns, binary files, permissions, symlink boundaries, exclusions, corruption, injected disk failures, crash recovery and retention. Python 3 is used only by the PTY test driver; that test is explicitly skipped if Python is missing. CI runs the suite on macOS and Ubuntu with Node 22 and 24.
 
+To try a local build after `npm ci`, run `npm install --global --install-links .`. The GitHub installation command in the README works without a clone.
+
 ## Recording the demo
 
 From a clone with dependencies installed, run `vhs docs/demo.tape`. VHS, ffmpeg and ttyd are recording tools; they are not runtime dependencies of turnback.
